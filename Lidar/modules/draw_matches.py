@@ -31,6 +31,6 @@ class Matches:
 		mx, my = self.img1.shape[0], self.img1.shape[1]
 		px = self.p2[:, 0]
 		py = self.move_points(self.p2[:, 1], my)
-		p2 = np.vstack((px, py))
+		p2 = np.stack((px[:], py[:]), axis=1)
 		print(p2)
 		return p2
