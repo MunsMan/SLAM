@@ -32,7 +32,6 @@ class Feature:
 	
 	def match_feat(self, kp1, des1, kp2, des2):
 		
-		print(type(des1), type(des2))
 		bf = cv2.BFMatcher()
 		matches = bf.knnMatch(des1, des2, 2)
 		good = []
@@ -43,7 +42,7 @@ class Feature:
 		
 		for m, n in matches:
 			if m.distance < 0.85 * n.distance:
-				good.append([m])
+				good.append(m)
 				points1.append(kp1[m.queryIdx].pt)
 				points2.append(kp2[m.trainIdx].pt)
 		
