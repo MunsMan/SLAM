@@ -14,8 +14,11 @@ class Matches:
 		img3 = np.hstack((self.img1, self.img2))
 		self.p2 = self.transform_p2()
 		if self.p1.shape == self.p2.shape:
-			for i in self.p1:
-				img3 = cv2.line(img3, (self.p1[0][i], self.p1[1][i]), (self.p2[0][i], self.p2[1][i]), self.c)
+			for i in range(self.p1.shape[0] - 1):
+				img3 = cv2.line(img3,
+				                (int(self.p1[i][0]), int(self.p1[i][1])),
+				                (int(self.p2[i][0]), int(self.p2[i][1])),
+				                self.c)
 			
 			return img3
 		else:
@@ -27,10 +30,8 @@ class Matches:
 		return points + move
 	
 	def transform_p2(self):
-		print(self.p2)
 		mx, my = self.img1.shape[0], self.img1.shape[1]
-		px = self.p2[:, 0]
-		py = self.move_points(self.p2[:, 1], my)
+		px = self.move_points(self.p2[:, 0], mx)
+		py = self.p2[:, 1]
 		p2 = np.stack((px[:], py[:]), axis=1)
-		print(p2)
 		return p2
