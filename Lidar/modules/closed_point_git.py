@@ -151,6 +151,7 @@ def main():
 		      for (x, y) in zip(px, py)]
 		cpoints = np.vstack((cx, cy))
 		
+		print(ppoints, cpoints)
 		R, T = ICP_matching(ppoints, cpoints)
 		print("R:", R)
 		print("T:", T)
