@@ -1,6 +1,7 @@
 import numpy as np
 from rplidar import RPLidar as rp
 import time
+from cv2 import line
 
 
 class Lidar:
@@ -29,12 +30,20 @@ class Lidar:
 		finally:
 			self.stop()
 	
+	def stop(self):
+		self.lidar.stop()
+		self.lidar.stop_motor()
+		self.lidar.disconnect()
+
+
+class LidarFunktions:
+	
 	@staticmethod
 	def get_coords(d, r):
 		"""
-		
-		:param d:
-		:param r:
+
+		:param d: float() - degree
+		:param r: float() - radius, distance in mm
 		:return:
 		"""
 		x = int(round(np.cos(d * np.pi / 180) * r, 1))
@@ -45,7 +54,27 @@ class Lidar:
 	def map_coords(points, position):
 		return points[0] + position[0], points[1] + position[1]
 	
-	def stop(self):
-		self.lidar.stop()
-		self.lidar.stop_motor()
-		self.lidar.disconnect()
+	def prepare_data(self, data, position):
+		xy_data = []
+		for q, d, r in data:
+			x, y = self.get_coords(d, r)
+			x, y = self.map_coords((x, y), position)
+			xy_data.append((x, y))
+		return np.array(xy_data)
+	
+	@staticmethod
+	def draw_main_map(map, data, position, color=200, thickness=2):
+		for x, y in data:
+			line(map, position, (x, y), color, thickness)
+		return map
+	
+	@staticmethod
+	def draw_line_map(map, data, color=200, thickness=5):
+		last_point = None
+		for x, y in data:
+			if last_point is None:
+				last_point = (x, y)
+			else:
+				line(map, last_point, (x, y), color, thickness)
+				last_point = (x, y)
+		return map
