@@ -19,9 +19,7 @@ class Lidar:
 	
 	def get_scan(self):
 		"""
-		:param rotaions: int() - Defines, how many rotaions get returned
-		:return: tuple(int(), list()) - Counter of Scans, list of result(quality, degree, distance
-		)
+		:return: tuple(int(), list()) - Counter of Scans, list of result(quality, degree, distance)
 		"""
 		try:
 			for i, scan in enumerate(self.lidar.iter_scans()):

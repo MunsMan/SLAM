@@ -29,8 +29,8 @@ try:
 			print("Pre_data:", pre_data.shape)
 			mainMap = lf.draw_main_map(mainMap, pre_data, position)
 			lineMap = lf.draw_line_map(lineMap, pre_data)
-			feat = Feature(lineMap, 5)
-			lineMap, points = feat.get_corners()
+			# feat = Feature(lineMap, 5)
+			# lineMap, points = feat.get_corners()
 			image = np.hstack((mainMap, lineMap))
 			cv2.imshow("Karte", cv2.resize(image, (1000, 500)))
 			key = cv2.waitKey(1)
@@ -39,7 +39,7 @@ try:
 				cv2.destroyAllWindows()
 				break
 			if key == ord('s'):
-				cv2.imwrite("img{i}.jpg".format(i=i), image)
+				cv2.imwrite("img{i}.jpg".format(i=i), lineMap)
 			print(time.time() - st)
 
 finally:

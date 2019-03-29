@@ -30,7 +30,8 @@ class Feature:
 			x, y = points.pt
 			self.img2[int(x), int(y)] = color
 	
-	def match_feat(self, kp1, des1, kp2, des2):
+	@staticmethod
+	def match_feat(kp1, des1, kp2, des2):
 		
 		bf = cv2.BFMatcher()
 		matches = bf.knnMatch(des1, des2, 2)
