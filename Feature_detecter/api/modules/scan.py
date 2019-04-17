@@ -1,7 +1,7 @@
 import numpy as np
 from rplidar import RPLidar as rp
 import time
-from cv2 import line, add
+import cv2
 from scipy.ndimage import rotate
 
 
@@ -13,6 +13,8 @@ class Lidar:
 	
 	def start_lidar(self):
 		self.lidar.connect()
+		self.lidar.stop_motor()
+		time.sleep(1)
 		self.lidar.start_motor()
 		info = self.lidar.get_info()
 		time.sleep(2)
@@ -25,7 +27,7 @@ class Lidar:
 		try:
 			for i, scan in enumerate(self.lidar.iter_scans()):
 				self.__buffer.put((i, scan))
-				time.sleep(0.2)
+				time.sleep(0.1)
 		
 		finally:
 			self.stop()
@@ -43,20 +45,14 @@ class LidarFunktions:
 		"""
 		:param d: float() - degree
 		:param r: float() - radius, distance in mm
-		:return: tuple() - as coordinates
+		:return:
 		"""
 		x = int(round(np.cos(d * np.pi / 180) * r, 1))
 		y = int(round(np.sin(d * np.pi / 180) * r, 1))
 		return x, y
-
+	
 	@staticmethod
 	def map_coords(points, position):
-		"""
-		function to transform points into map
-		:param points: tuple() - points
-		:param position: tuple() - position
-		:return: tuple() - transformed points
-		"""
 		return points[0] + position[0], points[1] + position[1]
 	
 	def prepare_data(self, data, position):
@@ -68,13 +64,13 @@ class LidarFunktions:
 		return np.array(xy_data)
 	
 	@staticmethod
-	def draw_main_map(data, position, size, main_map, grad, color=200, thickness=2):
+	def draw_main_map(data, position, size, mainMap, grad, color=200, thickness=2):
 		zeros = np.zeros(size, np.uint8)
 		for x, y in data:
-			line(zeros, position, (x, y), color, thickness)
+			cv2.line(zeros, position, (x, y), color, thickness)
 		zeros = rotate(zeros, grad)
-		main_map = add(zeros, main_map)
-		return main_map
+		mainMap = cv2.add(zeros, mainMap)
+		return mainMap
 	
 	@staticmethod
 	def draw_line_map(map, data, color=200, thickness=5):
@@ -83,14 +79,9 @@ class LidarFunktions:
 			if last_point is None:
 				last_point = (x, y)
 			else:
-				line(map, last_point, (x, y), color, thickness)
+				cv2.line(map, last_point, (x, y), color, thickness)
 				last_point = (x, y)
+		cv2.imshow("Karte", map)
+		cv2.waitKey(0)
+		cv2.destroyAllWindows()
 		return map
-	
-	@staticmethod
-	def draw_main_map_static(main_map, pre_data, position, size, color=200, thickness=2):
-		zeros = np.zeros(size, np.uint8)
-		for x, y in pre_data:
-			line(zeros, position, (x, y), color, thickness)
-		main_map = add(zeros, main_map)
-		return main_map
