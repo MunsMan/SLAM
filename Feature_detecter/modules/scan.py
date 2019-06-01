@@ -1,9 +1,8 @@
 import numpy as np
 from rplidar import RPLidar as rp
 import time
-from cv2 import line, add
-from scipy.ndimage import rotate
-
+import cv2
+from imutils import rotate
 
 class Lidar:
 	
@@ -12,7 +11,6 @@ class Lidar:
 		self.__buffer = buffer
 	
 	def start_lidar(self):
-		self.lidar.connect()
 		self.lidar.start_motor()
 		info = self.lidar.get_info()
 		time.sleep(2)
@@ -26,9 +24,58 @@ class Lidar:
 			for i, scan in enumerate(self.lidar.iter_scans()):
 				self.__buffer.put((i, scan))
 				time.sleep(0.2)
+				print("Scaned:", i)
 		
 		finally:
 			self.stop()
+	
+	def get_scan_v2(self, sps):
+		"""
+		Function receive the data from the Lidar in a defined frequency. You define it in scans per Second.
+		:param sps: int() - scans per seconds
+		:return:
+		"""
+		inter = self.lidar.iter_measurments(0)
+		scan = []
+		st = time.time()
+		tps = 1 / sps
+		scan_counter = 1
+		try:
+			for i in inter:
+				n, q, a, d = i
+				if n:
+					if time.time() > st:
+						self.__buffer.put((scan_counter, scan))
+						st += tps
+						scan_counter += 1
+					scan = []
+					scan.append((q, a, d))
+				else:
+					scan.append((q, a, d))
+		finally:
+			self.stop()
+	
+	def get_scan_v3(self, event, rotations=1):
+		inter = self.lidar.iter_measurments(0)
+		scan = []
+		scan_counter = 1
+		rotation = 0
+		try:
+			for i in inter:
+				n, q, a, d = i
+				if n:
+					if event and rotation == rotations:
+						self.__buffer.put((scan_counter, scan))
+						scan_counter += 1
+						scan = []
+						rotation = 0
+					scan.append((q, a, d))
+					rotation += 1
+				else:
+					scan.append((q, a, d))
+		finally:
+			self.stop()
+			
 	
 	def stop(self):
 		self.lidar.stop()
@@ -71,9 +118,9 @@ class LidarFunktions:
 	def draw_main_map(data, position, size, main_map, grad, color=200, thickness=2):
 		zeros = np.zeros(size, np.uint8)
 		for x, y in data:
-			line(zeros, position, (x, y), color, thickness)
+			cv2.line(zeros, position, (x, y), color, thickness)
 		zeros = rotate(zeros, grad)
-		main_map = add(zeros, main_map)
+		main_map = cv2.add(zeros, main_map)
 		return main_map
 	
 	@staticmethod
@@ -83,14 +130,40 @@ class LidarFunktions:
 			if last_point is None:
 				last_point = (x, y)
 			else:
-				line(map, last_point, (x, y), color, thickness)
+				cv2.line(map, last_point, (x, y), color, thickness)
 				last_point = (x, y)
 		return map
 	
 	@staticmethod
-	def draw_main_map_static(main_map, pre_data, position, size, color=200, thickness=2):
+	def draw_main_map_static(main_map, pre_data, position, rotation, size, i, color=200, thickness=2):
+		st = time.time()
 		zeros = np.zeros(size, np.uint8)
 		for x, y in pre_data:
-			line(zeros, position, (x, y), color, thickness)
-		main_map = add(zeros, main_map)
+			cv2.line(zeros, position, (x, y), color, thickness)
+		zeros = rotate(zeros, rotation)
+		match = LidarFunktions.review_match(main_map, zeros)
+		print("Review:", match)
+		if i > 10 and match < 85:
+			return main_map
+		main_map = cv2.add(main_map, zeros)
+		print("MainMap-Time:", time.time() - st)
 		return main_map
+	
+	@staticmethod
+	def review_match(img1, img2):
+		thresh_img1 = cv2.threshold(img1, 0, 255, cv2.THRESH_BINARY)[1]
+		thresh_img2 = cv2.threshold(img2, 0, 255, cv2.THRESH_BINARY)[1]
+		obj_count2 = np.count_nonzero(thresh_img2)
+		array = np.logical_and(thresh_img1, thresh_img2)
+		matches = np.count_nonzero(array)
+		return matches / obj_count2
+	
+	@staticmethod
+	def evaluate_rotation(img1, img2, rotation):
+		assert img1.shape == img2.shape
+		w1 = np.sum(np.isin(img1, np.max(img1)))
+		w2 = np.sum(np.isin(img2, np.max(img2)))
+		dw = abs(w1 - w2)
+		print(np.max(img1))
+		print(np.count_nonzero(np.isin(img1, np.max(img1))))
+		return np.logical_and(np.isin(img1, np.max(img1)), np.isin(img2, np.max(img2)))

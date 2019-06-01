@@ -71,8 +71,8 @@ def process_data(size, pre_data_array, lineMap_array, mainMap_array, rotation, p
 	mainMap_process.start()
 
 
-def cal_rot_move(img1, img2, thresh):
-	feat = Feature(img1, img2, 10)
+def cal_rot_move(img1, img2, thresh, scale=10):
+	feat = Feature(img1, img2, scale)
 	
 	good, points1, points2, kp1, kp2 = feat.main()
 	
@@ -80,24 +80,23 @@ def cal_rot_move(img1, img2, thresh):
 	
 	num_matches = points1.shape[0]
 	
-	print("Matches:", num_matches)
-	
 	matches = Matches(feat.img1, points1, feat.img2, points2)
 	
-	motion = Motion(points1, points2)
+	motion = Motion(points1, points2, scale)
 	
 	dgrad, line1, line2 = motion.rotation()
 	
-	cv2.line(feat.img1, line1[0], line1[1], (0, 0, 255))
-	cv2.line(feat.img2, line2[0], line2[1], (0, 255, 0))
+	dgrad = np.round(dgrad, 2) * -1
 	
-	print("Grad", dgrad[0, 0])
+	cv2.line(feat.img1, line1[0], line1[1], (255))
+	cv2.line(feat.img2, line2[0], line2[1], (255))
 	
-	feat.img2 = rotate(feat.img2, dgrad, (250, 250))
+	feat.img2 = rotate(feat.img2, -dgrad, (250, 250))
 	
 	img3 = matches.match_drawer()
 	img4 = cv2.add(feat.img1, feat.img2)
 	
 	_img5 = np.hstack((img3, img4))
+	# _img5 = cv2.resize(_img5, (_img5.shape[0]/10 * scale, _img5.shape[1]/10 * scale))
 	
 	return num_matches, dgrad[0, 0], _img5

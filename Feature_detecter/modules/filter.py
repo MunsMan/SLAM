@@ -30,3 +30,15 @@ class Filter:
 			error = np.sum(np.abs(self.cal(self.p1) - self.cal(self.p2)))
 		# print(error)
 		return self.p1, self.p2
+	
+	def filter_corner(self):
+		error = np.sum(np.abs(np.sum(self.cal(self.p1)) - np.sum(self.cal(self.p2))))
+		while error > self.thresh:
+			print(self.cal(self.p1).shape)
+			print(self.cal(self.p2).shape)
+			max_val1 = np.where(np.isin(self.cal(self.p1), np.max(self.cal(self.p1))))
+			print(max_val1)
+			
+			print(np.sum(np.abs(self.cal(self.p1)) - np.sum(self.cal(self.p2))))
+			break
+		return self.p1, self.p2

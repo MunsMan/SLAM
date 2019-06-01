@@ -4,7 +4,7 @@ import numpy as np
 
 class CornerFeature:
 	
-	def __init__(self, image, scale=0, thresh=0.03, position=(5000, 5000)):
+	def __init__(self, image, scale=1, thresh=0.03, position=(5000, 5000)):
 		self.image = image
 		self.scale = scale
 		self.thresh = thresh
@@ -37,7 +37,7 @@ class Feature:
 		                           (img2.shape[0] // scale, img2.shape[1] // scale),
 		                           interpolation=cv2.INTER_AREA)
 		# self.gray2 = cv2.cvtColor(self.img2, cv2.COLOR_BGR2GRAY)
-		self.gray2 = self.img1
+		self.gray2 = self.img2
 		self.orb = cv2.ORB_create()
 	
 	def get_feat(self):
