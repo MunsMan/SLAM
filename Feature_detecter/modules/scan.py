@@ -64,26 +64,26 @@ class Lidar:
 			for i in inter:
 				n, q, a, d = i
 				if n:
-					if event and rotation == rotations:
+					if event.is_set() and rotation >= rotations:
+						scan.append((q, a, d))
 						self.__buffer.put((scan_counter, scan))
-						scan_counter += 1
-						scan = []
+						event.clear()
 						rotation = 0
-					scan.append((q, a, d))
+						scan = []
+					scan_counter += 1
 					rotation += 1
 				else:
 					scan.append((q, a, d))
 		finally:
 			self.stop()
 			
-	
 	def stop(self):
 		self.lidar.stop()
 		self.lidar.stop_motor()
 		self.lidar.disconnect()
 
 
-class LidarFunktions:
+class LidarFunctions:
 	
 	@staticmethod
 	def get_coords(d, r):
@@ -135,18 +135,16 @@ class LidarFunktions:
 		return map
 	
 	@staticmethod
-	def draw_main_map_static(main_map, pre_data, position, rotation, size, i, color=200, thickness=2):
-		st = time.time()
+	def draw_main_map_static(main_map, pre_data, position, rotation, size, thresh, i, color=200, thickness=2):
 		zeros = np.zeros(size, np.uint8)
 		for x, y in pre_data:
 			cv2.line(zeros, position, (x, y), color, thickness)
 		zeros = rotate(zeros, rotation)
-		match = LidarFunktions.review_match(main_map, zeros)
+		match = LidarFunctions.review_match(main_map, zeros)
 		print("Review:", match)
-		if i > 10 and match < 85:
+		if 80 < i and match < thresh:
 			return main_map
 		main_map = cv2.add(main_map, zeros)
-		print("MainMap-Time:", time.time() - st)
 		return main_map
 	
 	@staticmethod

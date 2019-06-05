@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from modules import Feature, Matches, Filter, Motion, Lidar, LidarFunktions, Visualization
+from modules import Feature, Matches, Filter, Motion, Lidar, LidarFunctions, Visualization
 from imutils import rotate
 import time
 from multiprocessing import Process, Queue

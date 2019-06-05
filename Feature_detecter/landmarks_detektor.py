@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from modules import Lidar, LidarFunktions
+from modules import Lidar, LidarFunctions
 from multiprocessing import Process, Queue, Event, Array
 import time
 import math
@@ -45,9 +45,9 @@ def mark_line(image, position):
 	flag, b = cv2.threshold(image, 0, 255, cv2.THRESH_OTSU)
 	edges = cv2.Canny(b, 150, 200, 3, 5)
 	lines = cv2.HoughLinesP(edges, 10, np.pi / 128, 290, minLineLength=400, maxLineGap=100)
+	color_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 	if lines is not None:
 		lines = lines.reshape((-1, 4))
-		color_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 		len_max = 0
 		for x1, y1, x2, y2 in lines:
 			lenght = math.sqrt(abs(x2 - x1) ** 2 + abs(y2 - y1) ** 2)
@@ -61,7 +61,7 @@ def mark_line(image, position):
 		cv2.line(color_image, (5000, 2500), (2500, 2500), (0, 255, 0), 4)
 		grad = get_degree(l1, l2, position[0], position[1])
 	else:
-		return image, None
+		return color_image, None
 	return color_image, grad
 
 
@@ -78,11 +78,12 @@ mainMap = np.zeros(size, np.uint8)
 # mainMapArray = Array()
 mainMapEvent = Event()
 new_scan_event = Event()
-get_lidar_data = Process(target=lidar.get_scan_v3, args=(new_scan_event, 2))
+get_lidar_data = Process(target=lidar.get_scan_v3, args=(new_scan_event, 3))
 start_time = time.time()
 last_line_map = None
 grad_counter = 0
 last_grad = None
+new_scan_event.set()
 
 try:
 	get_lidar_data.start()
@@ -90,10 +91,10 @@ try:
 	while True:
 		if not lidar_data.empty():
 			print("Scan-time:", time.time() - start_time)
+			start_time = time.time()
 			i, data = lidar_data.get()
-			print(len(data))
 			pre_data = lf.prepare_data(data, position)
-			mainMap = lf.draw_main_map_static(mainMap, pre_data, position, grad_counter, size, i)
+			mainMap = lf.draw_main_map_static(mainMap, pre_data, position, grad_counter, size, 0.80, i)
 			image = draw_map(pre_data, size)
 			image, grad = mark_line(image, position)
 			if grad is not None:
@@ -103,11 +104,10 @@ try:
 					last_grad = grad
 				else:
 					last_grad = grad
-			
+
 			new_scan_event.set()
-			
 			image = np.hstack((image, cv2.cvtColor(mainMap, cv2.COLOR_GRAY2BGR)))
-			cv2.imshow("Karte", cv2.flip(cv2.resize(image, (2000, 1000)), 1))
+			cv2.imshow("Karte", cv2.resize(image, (1000, 500)))
 			key = cv2.waitKey(1)
 			if key == ord('q'):
 				print("END")
@@ -115,8 +115,6 @@ try:
 				break
 			if key == ord('s'):
 				cv2.imwrite("image{i}.jpg".format(i=i), image)
-			start_time = time.time()
-			new_scan_event.clear()
 
 finally:
 	lidar.stop()

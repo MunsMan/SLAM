@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from modules import Lidar, LidarFunktions
+from modules import Lidar, LidarFunctions
 from multiprocessing import Process, Queue, Event
 import time
 from Process import cal_rot_move
