@@ -57,25 +57,27 @@ class Rotation:
 			cv2.line(image, (x, y), (x, y), 255, 10)
 		return image
 	
-	def main(self, pre_data, last_rotation=None, rotation_counter=0):
+	def main(self, pre_data, cal_rotation=False, last_rotation=None, rotation_counter=0):
 		"""
 		This Function combines a few steps, with are used in some other functions.
 		Feel free to write your own main for other applications.
 		:param pre_data: np.array() - Preprocessed data with the module from LidarFunctions.
-		:param last_rotation: None or int() or float() -  if not None, it will calculate the grad_counter and 
+		:param cal_rotation: bool() - Set True if you want to calculate the rotation compared to the last.
+		:param last_rotation: None or int() or float() -  if not None, it will calculate the rotation_counter and
 		return the new grad as last_rotation
-		:param rotation_counter: float() or int() - it needs to be the last grad_counter from the last processed scan if given
-		:return: the colored image and the rotation or the image, the last_rotation and the grad_counter
+		:param rotation_counter: float() or int() - it needs to be the last rotation_counter from the last processed scan if given
+		:return: the colored image and the rotation or the image, the last_rotation and the rotation_counter
 		"""
 		image = self.draw_map(pre_data, self.size)
 		image, rotation = self.mark_line(image)
-		if last_rotation is not None:
+		if cal_rotation:
 			if rotation is not None:
-				drotation = rotation - last_rotation
-				rotation_counter += drotation
-				last_rotation = rotation
-				return image, last_rotation, rotation_counter
-			else:
-				last_rotation = rotation
-				return image, last_rotation, rotation_counter
-		return image, rotation
+				if last_rotation is not None:
+					drotation = rotation - last_rotation
+					rotation_counter += drotation
+					last_rotation = rotation
+					return image, last_rotation, rotation_counter
+				else:
+					last_rotation = rotation
+					return image, last_rotation, rotation_counter
+		return image, rotation, last_rotation
