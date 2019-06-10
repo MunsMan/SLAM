@@ -1,8 +1,25 @@
 import cv2
 import numpy as np
 from modules import Lidar, LidarFunctions, Rotation
-from multiprocessing import Process, Queue, Event, Array
+from multiprocessing import Process, Queue, Event
 import time
+from imutils import rotate
+
+
+def draw_map(data, size):
+	image = np.zeros(size, dtype=np.uint8)
+	for x, y in data:
+		cv2.line(image, (x, y), (x, y), 255, 10)
+	return image
+
+
+def movement(last_pre_data, pre_data, rotation, size):
+	last_cp = draw_map(last_pre_data, size)
+	cp = draw_map(pre_data, size)
+	cp = rotate(cp, rotation)
+	
+	
+
 
 # Queue
 lidar_data = Queue()
@@ -33,9 +50,9 @@ try:
 			start_time = time.time()
 			i, data = lidar_data.get()
 			pre_data = lf.prepare_data(data, position)
-			mainMap = lf.draw_main_map_static(mainMap, pre_data, position, rotation_counter, size, 0.80, i)
 			rotation_return = Rotation(position, size).main(pre_data, True, last_rotation, rotation_counter)
 			image, last_rotation, rotation_counter = rotation_return
+			mainMap = lf.draw_and_add_main_map(mainMap, pre_data, position, rotation_counter, size, 0.80, i)
 			new_scan_event.set()
 			image = np.hstack((image, cv2.cvtColor(mainMap, cv2.COLOR_GRAY2BGR)))
 			cv2.imshow("Karte", cv2.resize(image, (1000, 500)))
