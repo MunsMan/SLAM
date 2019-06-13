@@ -1,4 +1,4 @@
-from modules import LidarFunktions
+from modules import LidarFunctions
 from modules import Feature, Filter, Matches, Motion
 import cv2
 from imutils import rotate
@@ -14,7 +14,7 @@ def process_lidar_data(lidar_data_queue, pre_data_array, lineMap_array, mainMap_
 		if not lidar_data_queue.empty():
 			st = time.time()
 			data_id, data = lidar_data_queue.get()
-			lf = LidarFunktions()
+			lf = LidarFunctions()
 			pre_data = lf.prepare_data(data, position)
 			pre_data_array[0] = data_id
 			pre_data_array[1] = pre_data.size
@@ -29,7 +29,7 @@ def process_lidar_data(lidar_data_queue, pre_data_array, lineMap_array, mainMap_
 
 
 def line_map(size, pre_data_array, lineMap_array):
-	lf = LidarFunktions()
+	lf = LidarFunctions()
 	data_id = pre_data_array[0]
 	data_size = int(pre_data_array[1])
 	data = np.frombuffer(pre_data_array.get_obj(), c.c_uint16)[2:(data_size + 2)].reshape(-1, 2)
@@ -40,7 +40,7 @@ def line_map(size, pre_data_array, lineMap_array):
 
 
 def main_map(size, pre_data_array, rotation, position, mainMap_array):
-	lf = LidarFunktions()
+	lf = LidarFunctions()
 	data_id = pre_data_array[0]
 	data_size = pre_data_array[1]
 	position_data = (position[0], position[1])
