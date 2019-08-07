@@ -55,8 +55,8 @@ try:
 			rotation_return = Rotation(position, size).main(pre_data, True, last_rotation, rotation_counter, True)
 			c_image, last_rotation, rotation_counter, image = rotation_return
 			if last_image is not None:
-				print(Motion(last_image, image).movement())
-			mainMap = lf.draw_and_add_main_map(mainMap, pre_data, position, rotation_counter, size, 0.80, i)
+				print(Motion(last_image, image, 10).movement2())
+			mainMap = lf.draw_and_add_main_map(mainMap, pre_data, position, rotation_counter, size, 0.90, i)
 			new_scan_event.set()
 			c_image = np.hstack((c_image, cv2.cvtColor(mainMap, cv2.COLOR_GRAY2BGR)))
 			last_image = image

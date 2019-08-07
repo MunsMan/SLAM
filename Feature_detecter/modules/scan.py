@@ -75,6 +75,7 @@ class Lidar:
 						self.__buffer.put((scan_counter, scan))
 						rotation = 0
 						scan = []
+						print("Del")
 					scan_counter += 1
 					rotation += 1
 				else:
