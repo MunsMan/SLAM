@@ -70,6 +70,11 @@ class Lidar:
 						event.clear()
 						rotation = 0
 						scan = []
+					elif not event.is_set() and rotation >= rotations:
+						scan.append((q, a, d))
+						self.__buffer.put((scan_counter, scan))
+						rotation = 0
+						scan = []
 					scan_counter += 1
 					rotation += 1
 				else:
@@ -114,6 +119,15 @@ class LidarFunctions:
 			xy_data.append((x, y))
 		return np.array(xy_data)
 	
+	def prepare_data_to_3D(self, data, position):
+		xy_data = []
+		for q, d, r in data:
+			x, y = self.get_coords(d, r)
+			x, y = self.map_coords((x, y), position)
+			xy_data.append((x, y, 0))
+		return np.array(xy_data)
+	
+	
 	@staticmethod
 	def draw_main_map(data, position, size, main_map, grad, color=200, thickness=2):
 		zeros = np.zeros(size, np.uint8)
@@ -135,7 +149,7 @@ class LidarFunctions:
 		return map
 	
 	@staticmethod
-	def draw_main_map_static(main_map, pre_data, position, rotation, size, thresh, i, color=200, thickness=2):
+	def draw_and_add_main_map(main_map, pre_data, position, rotation, size, thresh, i, color=200, thickness=2):
 		zeros = np.zeros(size, np.uint8)
 		for x, y in pre_data:
 			cv2.line(zeros, position, (x, y), color, thickness)
@@ -146,6 +160,25 @@ class LidarFunctions:
 			return main_map
 		main_map = cv2.add(main_map, zeros)
 		return main_map
+	
+	@staticmethod
+	def draw_point_cloud(pre_data, size, color=255, thickness=8):
+		zeros = np.zeros(size, np.uint8)
+		for x, y, _ in pre_data:
+			cv2.line(zeros, (x, y), (x, y), color, thickness)
+		return zeros
+	
+	@staticmethod
+	def draw_main_map(main_map, pre_data, position, rotation, size, thresh, i, color=255, thickness=2):
+		zeros = np.zeros(size, np.uint8)
+		for x, y in pre_data:
+			cv2.line(zeros, position, (x, y), color, thickness)
+		zeros = rotate(zeros, rotation)
+		match = LidarFunctions.review_match(main_map, zeros)
+		print("Review:", match)
+		if 80 < i and match < thresh:
+			return None, main_map
+		return True, zeros
 	
 	@staticmethod
 	def review_match(img1, img2):

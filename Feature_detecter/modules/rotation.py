@@ -43,8 +43,8 @@ class Rotation:
 			cv2.line(color_image, (line[0], line[1]), (line[2], line[3]), (0, 0, 255), 10)
 			l1, l2 = self.find_lotpunkt(line[0], line[1], line[2], line[3])
 			cv2.line(color_image, (l1, l2), (self.p1, self.p2), (255, 0, 0), 10)
-			cv2.line(color_image, (0, 2500), (2500, 2500), (0, 0, 255), 4)
-			cv2.line(color_image, (5000, 2500), (2500, 2500), (0, 255, 0), 4)
+			# cv2.line(color_image, (0, 2500), (2500, 2500), (0, 0, 255), 4)
+			# cv2.line(color_image, (5000, 2500), (2500, 2500), (0, 255, 0), 4)
 			grad = self.get_degree(l1, l2)
 		else:
 			return color_image, None
@@ -57,7 +57,7 @@ class Rotation:
 			cv2.line(image, (x, y), (x, y), 255, 10)
 		return image
 	
-	def main(self, pre_data, cal_rotation=False, last_rotation=None, rotation_counter=0):
+	def main(self, pre_data, cal_rotation=False, last_rotation=0, rotation_counter=0, with_original_img=False):
 		"""
 		This Function combines a few steps, with are used in some other functions.
 		Feel free to write your own main for other applications.
@@ -66,18 +66,32 @@ class Rotation:
 		:param last_rotation: None or int() or float() -  if not None, it will calculate the rotation_counter and
 		return the new grad as last_rotation
 		:param rotation_counter: float() or int() - it needs to be the last rotation_counter from the last processed scan if given
+		:param with_original_img: bool() -  if the original image is needed, set it to true
 		:return: the colored image and the rotation or the image, the last_rotation and the rotation_counter
 		"""
 		image = self.draw_map(pre_data, self.size)
-		image, rotation = self.mark_line(image)
+		cimage, rotation = self.mark_line(image)
 		if cal_rotation:
 			if rotation is not None:
 				if last_rotation is not None:
 					drotation = rotation - last_rotation
 					rotation_counter += drotation
 					last_rotation = rotation
-					return image, last_rotation, rotation_counter
+					if with_original_img:
+						return cimage, last_rotation, rotation_counter, image
+					return cimage, last_rotation, rotation_counter
 				else:
 					last_rotation = rotation
-					return image, last_rotation, rotation_counter
-		return image, rotation, last_rotation
+					if with_original_img:
+						return cimage, last_rotation, rotation_counter, image
+					return cimage, last_rotation, rotation_counter
+		if with_original_img:
+			if rotation is not None:
+				drotation = rotation - last_rotation
+				rotation_counter += drotation
+				last_rotation = rotation
+				return cimage, last_rotation, rotation_counter, image
+			else:
+				last_rotation = rotation
+				return image, last_rotation, rotation_counter, image
+		return cimage, rotation, last_rotation

@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from modules import Lidar, LidarFunctions, Rotation
+from modules import Lidar, LidarFunctions, Rotation, Motion
 from multiprocessing import Process, Queue, Event
 import time
 from imutils import rotate
@@ -34,12 +34,13 @@ mainMap = np.zeros(size, np.uint8)
 # mainMapArray = Array()
 mainMapEvent = Event()
 new_scan_event = Event()
-get_lidar_data = Process(target=lidar.get_scan_v3, args=(new_scan_event, 3))
+get_lidar_data = Process(target=lidar.get_scan_v3, args=(new_scan_event, 6))
 start_time = time.time()
 last_line_map = None
 rotation_counter = 0
 last_rotation = None
 new_scan_event.set()
+last_image = None
 
 try:
 	get_lidar_data.start()
@@ -50,12 +51,16 @@ try:
 			start_time = time.time()
 			i, data = lidar_data.get()
 			pre_data = lf.prepare_data(data, position)
-			rotation_return = Rotation(position, size).main(pre_data, True, last_rotation, rotation_counter)
-			image, last_rotation, rotation_counter = rotation_return
+			print("Datasize:", pre_data.shape)
+			rotation_return = Rotation(position, size).main(pre_data, True, last_rotation, rotation_counter, True)
+			c_image, last_rotation, rotation_counter, image = rotation_return
+			if last_image is not None:
+				print(Motion(last_image, image).movement())
 			mainMap = lf.draw_and_add_main_map(mainMap, pre_data, position, rotation_counter, size, 0.80, i)
 			new_scan_event.set()
-			image = np.hstack((image, cv2.cvtColor(mainMap, cv2.COLOR_GRAY2BGR)))
-			cv2.imshow("Karte", cv2.resize(image, (1000, 500)))
+			c_image = np.hstack((c_image, cv2.cvtColor(mainMap, cv2.COLOR_GRAY2BGR)))
+			last_image = image
+			cv2.imshow("Karte", cv2.resize(c_image, (1000, 500)))
 			key = cv2.waitKey(1)
 			if key == ord('q'):
 				print("END")
