@@ -22,7 +22,7 @@ class Filter:
 		return np.array(pa)
 	
 	def filter_points(self):
-		error = np.sum(np.abs(self.cal(self.p1) - self.cal(self.p2)))
+		error = np.sum(np.abs(np.sum(self.cal(self.p1)) - np.sum(self.cal(self.p2))))
 		while error > self.thresh:
 			dl = np.abs(self.cal(self.p1) - self.cal(self.p2))
 			self.p1 = np.delete(self.p1, np.where(np.isin(dl, np.max(dl)))[1], 0)

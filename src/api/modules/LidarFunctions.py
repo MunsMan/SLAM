@@ -1,90 +1,6 @@
 import numpy as np
-from rplidar import RPLidar as rp
-import time
 import cv2
 from imutils import rotate
-
-class Lidar:
-	
-	def __init__(self, buffer):
-		self.lidar = rp("/dev/tty.SLAB_USBtoUART")
-		self.__buffer = buffer
-	
-	def start_lidar(self):
-		self.lidar.start_motor()
-		info = self.lidar.get_info()
-		time.sleep(2)
-		return info
-	
-	def get_scan(self):
-		"""
-		:return: tuple(int(), list()) - Counter of Scans, list of result(quality, degree, distance)
-		"""
-		try:
-			for i, scan in enumerate(self.lidar.iter_scans()):
-				self.__buffer.put((i, scan))
-				time.sleep(0.2)
-				print("Scaned:", i)
-		
-		finally:
-			self.stop()
-	
-	def get_scan_v2(self, sps):
-		"""
-		Function receive the data from the Lidar in a defined frequency. You define it in scans per Second.
-		:param sps: int() - scans per seconds
-		:return:
-		"""
-		inter = self.lidar.iter_measurments(0)
-		scan = []
-		st = time.time()
-		tps = 1 / sps
-		scan_counter = 1
-		try:
-			for i in inter:
-				n, q, a, d = i
-				if n:
-					if time.time() > st:
-						self.__buffer.put((scan_counter, scan))
-						st += tps
-						scan_counter += 1
-					scan = []
-					scan.append((q, a, d))
-				else:
-					scan.append((q, a, d))
-		finally:
-			self.stop()
-	
-	def get_scan_v3(self, event, rotations=1):
-		inter = self.lidar.iter_measurments(0)
-		scan = []
-		scan_counter = 1
-		rotation = 0
-		try:
-			for i in inter:
-				n, q, a, d = i
-				if n:
-					if event.is_set() and rotation >= rotations:
-						scan.append((q, a, d))
-						self.__buffer.put((scan_counter, scan))
-						event.clear()
-						rotation = 0
-						scan = []
-					elif rotation >= rotations:
-						rotation = 0
-						scan = []
-						print("Del")
-					scan_counter += 1
-					rotation += 1
-				else:
-					scan.append((q, a, d))
-		finally:
-			self.stop()
-			
-	def stop(self):
-		self.lidar.stop()
-		self.lidar.stop_motor()
-		self.lidar.disconnect()
 
 
 class LidarFunctions:
@@ -99,7 +15,7 @@ class LidarFunctions:
 		x = int(round(np.cos(d * np.pi / 180) * r, 1))
 		y = int(round(np.sin(d * np.pi / 180) * r, 1))
 		return x, y
-
+	
 	@staticmethod
 	def map_coords(points, position):
 		"""
@@ -127,11 +43,17 @@ class LidarFunctions:
 		return np.array(xy_data)
 	
 	@staticmethod
-	def draw_main_map(data, position, size, main_map, grad, color=200, thickness=2):
+	def just_main_map(data, position, size, color=200, thickness=2):
+		map = np.zeros(size, np.uint8)
+		for x, y in data:
+			cv2.line(map, position, (x, y), color, thickness)
+		return map
+	
+	@staticmethod
+	def draw_main_map(data, position, size, main_map, color=200, thickness=2):
 		zeros = np.zeros(size, np.uint8)
 		for x, y in data:
 			cv2.line(zeros, position, (x, y), color, thickness)
-		zeros = rotate(zeros, grad)
 		main_map = cv2.add(zeros, main_map)
 		return main_map
 	

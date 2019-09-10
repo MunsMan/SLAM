@@ -32,9 +32,9 @@ position = (size[0] // 2, size[1] // 2)
 mainMap = np.zeros(size, np.uint8)
 
 # mainMapArray = Array()
-mainMapEvent = Event()
+# mainMapEvent = Event()
 new_scan_event = Event()
-get_lidar_data = Process(target=lidar.get_scan_v3, args=(new_scan_event, 6))
+get_lidar_data = Process(target=lidar.get_scan_v3, args=(new_scan_event, 3))
 start_time = time.time()
 last_line_map = None
 rotation_counter = 0

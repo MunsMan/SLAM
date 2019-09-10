@@ -1,8 +1,9 @@
 import numpy as np
-import math
 import cv2
-from .feature import Feature
-from .filter import Filter
+
+
+# from .feature import Feature
+# from .filter import Filter
 
 class Motion:
 	
@@ -10,8 +11,6 @@ class Motion:
 		self.scale = scale
 		self.base_img = base_img
 		self.new_img = new_img
-		# self.create_feature()
-		# self.base_center = self.center(self.base_img)
 		self.weight = 0.00001
 		self.thresh = 0.95
 	
@@ -121,6 +120,20 @@ class Motion:
 				print("END")
 				cv2.destroyWindow("Image")
 		return points1, points2
+	
+	def motion_detection(self, res, thresh):
+		"""
+		function to calculate a motion-mask. A zero means Motion and one means no Motion.
+		:param res: int() - for the lenght
+		:param thresh: float() - the allowed error
+		:return: np.array() -  motion masks
+		"""
+		base = cv2.resize(self.base_img, (res, res))
+		new = cv2.resize(self.new_img, (res, res))
+		d = np.abs(base - new)
+		mask = d <= thresh
+		return mask
+		
 
 if __name__ == '__main__':
 	base_img = np.array([[0, 0, 0, 0, 0],
@@ -130,18 +143,11 @@ if __name__ == '__main__':
 	                     [0, 0, 0, 0, 0]])
 	new_img = np.array([[0, 0, 0, 0, 0],
 	                    [0, 0, 0, 0, 0],
-	                    [0, 0, 0, 0, 0],
+	                    [0, 1, 1, 1, 0],
 	                    [1, 0, 0, 0, 1],
 	                    [1, 1, 1, 1, 1]])
 	
-	mo = Motion(base_img, new_img)
-	print("lu")
-	lu = mo.cal_error(mo.shift(mo.new_img, (-1, 1)))
-	print("ru")
-	ru = mo.cal_error(mo.shift(mo.new_img, (1, 1)))
-	print("ld")
-	ld = mo.cal_error(mo.shift(mo.new_img, (-1, 0)))
-	print("rd")
-	rd = mo.cal_error(mo.shift(mo.new_img, (1, 0)))
-	
-	print(mo.movement())
+	mo = Motion(base_img, new_img).motion_detection(5, 0)
+	print(mo)
+	u_img = np.putmask(base_img, mo == False, 0)
+	print(base_img)
